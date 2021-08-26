@@ -1,0 +1,263 @@
+# CS224
+# Lab No:1
+# Section No: 2
+# Name: Arman Engin Sucu
+# ID: 21801777
+# Part3: A program giving informations about the array
+.data
+	array: .word 1, 4, 4, 5, 2, 2, 1
+	arrsize: .word 7
+	memAdd: .asciiz "Memory Address  "	
+	arrEll: .asciiz "Array Element  " 
+	posHex: .asciiz "Position(hex)   "  
+	valInt: .asciiz "Value(int)  "	
+	line: .asciiz "==============  "
+	avg: .asciiz "Average: "
+	max: .asciiz "Max: "
+	min: .asciiz "Min: "
+	newLine: .asciiz "\n"
+	space: .asciiz "          "
+	
+.text
+	lw $s0, arrsize
+	
+	# print memAdd label
+	li $v0, 4
+	la $a0, memAdd
+	syscall
+	# print arrEll label
+	li $v0, 4
+	la $a0, arrEll
+	syscall
+	# print newLine
+	li $v0, 4
+	la $a0, newLine
+	syscall
+	# print memAdd posHex
+	li $v0, 4
+	la $a0, posHex
+	syscall
+	# print arrEll valInt
+	li $v0, 4
+	la $a0, valInt
+	syscall
+	# print newLine
+	li $v0, 4
+	la $a0, newLine
+	syscall
+	# print memAdd line
+	li $v0, 4
+	la $a0, line
+	syscall
+	# print arrEll line
+	li $v0, 4
+	la $a0, line
+	syscall
+	# print newLine
+	li $v0, 4
+	la $a0, newLine
+	syscall
+	
+	#jump printArray
+	jal printArray
+	
+	# print the avg
+	li $v0, 4
+	la $a0, avg
+	syscall
+	# jump findAverage
+	jal findAverage
+	# print the newLine
+	li $v0, 4
+	la $a0, newLine
+	syscall
+	
+	# print the max
+	li $v0, 4
+	la $a0, max
+	syscall
+	# jump max
+	jal findMax
+	# print the newLine
+	li $v0, 4
+	la $a0, newLine
+	syscall
+	
+	# print the min
+	li $v0, 4
+	la $a0, min
+	syscall
+	# jump min
+	jal findMin
+	# print hte newLine
+	li $v0, 4
+	la $a0, newLine
+	syscall
+	
+	# stop execution
+	li $v0, 10
+	syscall
+	
+printArray:
+	addi $t0, $zero, 0
+	mul $t1, $s0, 4
+	j while
+	do:
+		# print the address as a hexadecimal value
+		la $t2, array($t0)
+		li $v0, 34
+		add $a0, $zero, $t2
+		syscall
+		# print space
+		li $v0, 4
+		la $a0, space
+		syscall
+		# print the number
+		li $v0, 1
+		lw $a0, array($t0)
+		syscall
+		# print a new line
+		li $v0, 4
+		la $a0, newLine
+		syscall
+		addi $t0, $t0, 4
+	while: bne $t0, $t1, do
+	jr $ra
+	
+findAverage:
+	move $t0, $zero
+	mul $t1, $s0, 4
+	addi $t2, $zero, 0
+	j while2
+	do2:
+		lw $t3, array($t0)
+		add $t2, $t2, $t3	
+		addi $t0, $t0, 4	
+	while2: bne $t1, $t0, do2
+	div $t3, $t2, $s0
+	# print the average
+	li $v0, 1
+	move $a0, $t3
+	syscall
+	jr $ra
+
+findMax:
+	addi $t0, $zero, -10000000 # $t0 will hold the max value
+	addi $t1, $zero, 0 # $t1 will holds the address
+	mul $t2, $s0, 4 # $t2 holds the last bit
+	j while3
+	do3:
+		lw $t3, array($t1)
+		bgt $t3, $t0, setMax
+		continue:
+		addi $t1, $t1, 4
+	while3: bne $t2, $t1, do3
+	# print the max
+	li $v0, 1
+	move $a0, $t0
+	syscall
+	jr $ra	
+setMax: move $t0, $t3	
+j continue
+	
+findMin:
+	addi $t0, $zero 1000000000 # $t0 holds the min value
+	addi $t1, $zero, 0 # $t1 holds the address
+	mul $t2, $s0, 4 # $t2 holds the last bit
+	j while4
+	do4:
+		lw $t3, array($t1)
+		blt $t3, $t0, setMin
+		continue2:
+		addi $t1, $t1, 4
+		while4: bne $t1, $t2, do4
+		# print the min value
+		li $v0, 1
+		move $a0, $t0
+		syscall
+		jr $ra 
+		
+setMin: move $t0, $t3
+j continue2
+			
+	
+
+# CS224
+# Lab No:1
+# Section No: 2
+# Name: Arman Engin Sucu
+# ID: 21801777
+# part4: A program to calcuate a specific mathematical expression
+
+.data
+numberA: .asciiz "Please enter number A: "
+numberB: .asciiz "Please enter number B: "
+numberC: .asciiz "Please enter number C: "
+numberD: .asciiz "Please enter number D: "
+result: .asciiz "The result for (A + B / C ) % D - ( A * C ) is: "
+
+.text
+#Prompt user to enter the number A
+li $v0, 4
+la $a0, numberA
+syscall
+#Get number A from keyboard
+li $v0, 5
+syscall
+#Store the number in $t7
+move $t7, $v0
+
+ # Prompt user to enter the number B
+ li $v0, 4
+ la $a0, numberB
+ syscall
+ # Get number B from keybord
+ li $v0, 5
+ syscall
+ # Store the number in $t0
+ move $t0, $v0
+ 
+  # Prompt user to enter the number C
+ li $v0, 4
+ la $a0, numberC
+ syscall
+ # Get number C from keybord
+ li $v0, 5
+ syscall
+ # Store the number in $t1
+ move $t1, $v0
+ 
+  # Prompt user to enter the number D
+ li $v0, 4
+ la $a0, numberD
+ syscall
+ # Get number D from keybord
+ li $v0, 5
+ syscall
+ # Store the number in $t2
+ move $t2, $v0
+ 
+ # Print the result label
+ li $v0, 4
+ la $a0, result
+ syscall
+ 
+ # store B / C in $t3
+ div $t3, $t0, $t1
+ # store A + B/C in $t3
+ add $t3, $t3, $t7
+ #  div instruction to find t(A + B/C) % D 
+ div $t3, $t2
+ # get mod from hi to $t3
+ mfhi $t3
+ # store AxC $t4
+ mul $t4, $t7, $t1 
+ # subtract $3 - $4 and set it in the $t3 to find the the final result
+ sub $t3, $t3, $t4
+ 
+ # print the result
+ li $v0, 1
+ add $a0, $t3, $zero
+ syscall
+ 
+

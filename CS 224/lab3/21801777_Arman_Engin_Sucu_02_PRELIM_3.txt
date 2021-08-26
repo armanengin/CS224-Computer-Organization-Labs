@@ -1,0 +1,163 @@
+# CS224
+# Lab No: 3
+# Section No: 02
+# Name: Arman Engin Sucu
+# ID: 21801777
+# part1: a program to count number of lw and add instructions in itself
+.data
+textForAdd: .asciiz "The number of add instructions are: " 
+textForLw: .asciiz "\nThe number of lw instructions are: "
+
+.text
+.globl main
+main:
+L1: la $a0, L1
+la $a1, L2
+
+jal countInstruction
+add $s0, $v0, $zero # get number of add instructions to $s0
+add $s1, $v1, $zero # get number of lw instructions to $s1
+
+# print textForAdd
+li $v0, 4
+la $a0, textForAdd
+syscall
+# print number of add instructions
+li $v0, 1
+add $a0, $s0, $zero
+syscall
+
+# print textForLw
+li $v0, 4
+la $a0, textForLw
+syscall
+# print number of lw instructions
+li $v0, 1
+add $a0, $s1, $zero
+syscall
+
+# stop the program
+li $v0, 10
+syscall
+
+countInstruction:
+	addi $sp, $sp, -8
+	sw $s0, 0($sp)
+	sw $s1, 4($sp)
+	
+	addi $s0, $zero, 63 # initialize $s0 with 63 to make funct bits all 1 s.
+	while:
+		bgt $a0, $a1, exit
+		lw $s1, 0($a0) # $s1 has the first instruction adress
+		and $s1, $s1, $s0
+		beq $s1, 32, controlAdd
+		continue1:
+		lw $s1, 0($a0)
+		srl $s1, $s1, 26 # 26 bits shift right to check the opcode
+		beq $s1, 35, incrementLw
+		continue2:
+		addi $a0, $a0, 4 # go to next instruction
+		j while
+		exit:
+			lw  $s0, 0($sp)
+			lw $s1, 4($sp)
+			addi $sp, $sp, 8
+			jr $ra
+controlAdd:
+	lw $s1, 0($a0)
+	srl $s1, $s1, 26 # 26 bits shift right to check the opcode
+	beq $s1, 0, incrementAdd
+	j continue1
+	
+incrementAdd:
+	addi $v0, $v0, 1
+	j continue2 # j continue2 since the instruction was an add so jump to add $a0 to 4
+	
+incrementLw:
+	addi $v1, $v1, 1
+L2:	j continue2
+	
+
+# CS224
+# Lab No: 3
+# Section No: 02
+# Name: Arman Engin Sucu
+# ID: 21801777
+# part2: a program to find division of two numbers with recursive way.
+
+.data
+numerator: .asciiz "Enter the numerator: "
+denominator: .asciiz "Enter the denominator: "
+text1: .asciiz "The result is: "
+continue: .asciiz "\nIf you want to contine please enter 1: "
+
+.text
+main:
+# prompt user to enter the numerator
+li $v0, 4
+la $a0, numerator
+syscall
+# get input from the user
+li $v0, 5
+syscall
+move $s0, $v0 # move numerator from the $v0 to $s0
+
+# prompt user to enter the denominator
+li $v0, 4
+la $a0, denominator
+syscall
+# get input from the user
+li $v0, 5
+syscall
+move $a1, $v0 # move denominator from $v0 to $a1
+move $a0, $s0 # move numerator $s0 to $a0
+
+jal recursiveDivision
+move $s0, $v0
+
+# print the text1
+li $v0, 4
+la $a0, text1
+syscall
+
+# print the result
+li $v0, 1
+move $a0, $s0
+syscall
+
+jal askUser
+
+beq $v0, 1, main
+
+# stop the program
+li $v0, 10
+syscall
+
+recursiveDivision:
+	addi $sp, $sp, -8
+	sw $s0, 0($sp) 
+	sw $ra, 4($sp)
+	
+	li $v0, 0
+	add $s0, $zero, 1
+	sub $a0, $a0, $a1
+	blt $a0, 0, recursiveDone # base case
+	
+	jal recursiveDivision
+	add $v0, $v0, $s0 # recursively add 1 to $v0 since in the $s0 there is 1
+	
+	recursiveDone:
+		lw $s0, 0($sp)
+		lw $ra, 4($sp)
+		addi $sp, $sp, 8
+		jr $ra
+	
+askUser:
+	li $v0, 4
+	la $a0, continue
+	syscall
+	li $v0, 5
+	syscall
+	jr $ra
+	
+	

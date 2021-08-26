@@ -1,0 +1,195 @@
+# CS224
+# Section No.: 02
+# Spring 2021
+# Lab No.: 6
+# Your Full Name/Bilkent ID: Arman Engin Sucu / 21801777
+
+.data
+menu1: .asciiz "\n--------------------------------------------MENU--------------------------------------------------"
+operation1: .asciiz "\n1. Create the consecutive square matrix's with dimension(N)."
+operation2: .asciiz "\n2. Display desired elements of the matrix by specifying its row and column member"
+operation3: .asciiz "\n3. Obtain the average of the matrix elements in a row-major fashion, and display."
+operation4: .asciiz "\n4. Obtain the average of the matrix elements in a column-major fashion, and display."
+operation5: .asciiz "\n5. Exit the Program"
+choose: .asciiz "\nPlease enter an operation number: "
+
+enter: .asciiz "\nPlease enter the dimension number N: "
+getR: .asciiz "\nPlease enter the row index: "
+getC: .asciiz "\nPlease enter the column index: "
+theElement: .asciiz "\nThe element at the specified row and column is: "
+rowMajorAverage: .asciiz "\nThe row-major average is: "
+columnMajorAverage: .asciiz "\nThe column-major average is: "
+
+.text
+.globl _main
+
+_main:
+
+li $v0, 4 #print the menu
+la $a0, menu1
+syscall
+la $a0, operation1
+syscall
+la $a0, operation2
+syscall
+la $a0, operation3
+syscall
+la $a0, operation4
+syscall
+la $a0, operation5
+syscall
+la $a0, choose
+syscall
+
+li $v0, 5
+syscall
+
+beq $v0, 1, op1
+beq $v0, 2, op2
+beq $v0, 3, op3
+beq $v0, 4, op4
+beq $v0, 5, op5
+
+op1:
+	#prompt user
+	li $v0, 4
+	la $a0, enter
+	syscall
+
+	#get int from user
+	li $v0, 5
+	syscall
+	
+	move $t0, $v0 #$t0 is N
+	move $s1, $t0 #$s1 has N
+	mul $t0, $t0, $t0#$t0 is NxN
+	addi $t0, $t0, 1 #$t0 is NxN + 1
+	
+	# allocate heap
+	move $a0, $t0
+	li $v0, 9
+	syscall
+	
+	move $s0, $v0 #$s0 has the starting address
+	
+	addi $t1, $zero, 1 #numbers
+	addi $t2, $zero, 0 #index
+	move $t3, $v0 #$t3 = starting adress
+	addConsequtiveNumbersToArray:
+		add $t3, $s0, $t2
+		sw $t1, 0($t3)
+		addi $t1, $t1, 1
+		addi $t2, $t2, 4
+		beq $t0, $t1, _main
+		j addConsequtiveNumbersToArray
+	
+op2:
+	#prompt user to enter the row index
+	li $v0, 4
+	la $a0, getR
+	syscall
+	# get row index
+	li $v0, 5
+	syscall	
+	move $t0, $v0 #t0 has the row index
+	
+	#prompt user to enter the column index
+	li $v0, 4
+	la $a0, getC
+	syscall
+	# get column index
+	li $v0, 5
+	syscall	
+	move $t1, $v0 #t1 has the column index
+	
+	subi $t0, $t0, 1 # (i - 1)
+	mul $t0, $t0, $s1 # (i - 1) x N
+	sll $t0, $t0, 2 # (i - 1) x N x 4
+	
+	subi $t1, $t1, 1 # (j - 1) 
+	sll $t1, $t1, 2 # (j - 1) x 4
+	
+	add $t3, $t1, $t0 #$t3 is the relative address of the requested element which is (i - 1) x N x 4 + (j - 1) x 4
+	add $t3, $t3, $s0 #$t3 has the direct address of the requested element
+	lw $t3, 0($t3) #$t3 has the requested element
+	
+	li $v0, 4
+	la $a0, theElement
+	syscall
+	
+	#print the element
+	li $v0, 1
+	move $a0, $t3
+	syscall
+	
+	j _main
+
+op3:
+	move $t0, $s0 # $t0 holds current address
+	mul $t1, $s1, 4 # $t1 has Nx4
+	mul $t1, $t1, $s1 #$t1 is NxNx4
+	addi $t2, $zero, 0  #t2 holds the current index
+	li $t3, 0 # $t3 holds the current sum
+	rowMajorSum:
+		add $t0, $s0, $t2 # update the current index
+		lw $t4, 0($t0)
+		li $v0, 1
+		move $a0, $t4
+		syscall
+		add $t3, $t3, $t4 # update the sum
+		addi $t2, $t2, 4
+		bne $t1, $t2, rowMajorSum
+		
+		div $t5, $t3, $s1 
+		div $t5, $t5, $s1 #average ($t5)= sum($t3)/NxN
+		
+		li $v0, 4
+		la $a0, rowMajorAverage
+		syscall
+		
+		#print the average
+		li $v0, 1
+		move $a0, $t5
+		syscall
+		
+		j _main
+		
+op4:
+	move $t0, $s0 # $t0 holds current address
+	mul $t1, $s1, 4 # $t1 has Nx4
+	addi $t2, $zero, 0  #t2 holds the index for inner while
+	addi $t3, $zero, 0  #t3 holds the index for outer while
+	li $t4, 0 # $t4 holds the current sum
+	mul $t5, $s1, 4 #$t5 has Nx4
+	outerWhile:
+		addi $sp $sp, -4
+		sw $t3, 0($sp) #store the $t3 value since in the inner loop has to be modified
+		addi $t2, $zero, 0 # initialize inner while's index 0 again
+		innerWhile:
+			add $t7, $t3, $s0 # $t7 now has the current element's index
+			lw $t6, 0($t7) # get the element
+			add $t4, $t4, $t6 #add current element to the sum
+			add $t3, $t3, $t1 # to go to other column add Nx4 to the current index
+			addi $t2, $t2, 1
+			bne $t2, $s1, innerWhile
+		lw $t3, 0($sp) # get $t3's value
+		addi $sp, $sp, 4
+		addi $t3, $t3, 4
+		bne $t3, $t1, outerWhile
+		
+		li $v0, 4
+		la $a0, columnMajorAverage
+		syscall
+		
+		#print the average
+		div $t4, $t4, $s1
+		div $t4, $t4, $s1 #average = sum/NxN
+		li $v0, 1
+		move $a0, $t4
+		syscall
+		j _main
+	
+op5:
+	li $v0, 10
+	syscall
+		
